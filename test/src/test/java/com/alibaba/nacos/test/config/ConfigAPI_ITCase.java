@@ -55,7 +55,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = Config.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class ConfigAPI_ITCase {
-    public static final long TIME_OUT = 3000;
+    public static final long TIME_OUT = 2000;
     public ConfigService iconfig = null;
     ServerHttpAgent agent = null;
 
@@ -82,6 +82,15 @@ public class ConfigAPI_ITCase {
 
     @After
     public void cleanup() throws Exception {
+        HttpResult result = null;
+        try {
+            List<String> params = Arrays.asList("dataId", dataId, "group", group, "beta", "true");
+            result = agent.httpDelete(CONFIG_CONTROLLER_PATH + "/", null, params, agent.getEncode(), TIME_OUT);
+            Assert.assertEquals(HttpURLConnection.HTTP_OK, result.code);
+            Assert.assertEquals(true, JSON.parseObject(result.content).getBoolean("data"));
+        } catch (Exception e) {
+            Assert.assertTrue(false);
+        }
     }
 
     /**
@@ -139,7 +148,7 @@ public class ConfigAPI_ITCase {
         final String content = "test";
 
         boolean result = iconfig.publishConfig(dataId, null, content);
-        Thread.sleep(2*TIME_OUT);
+        Thread.sleep(TIME_OUT);
         Assert.assertTrue(result);
 
         String value = iconfig.getConfig(dataId, null, TIME_OUT);
@@ -223,7 +232,7 @@ public class ConfigAPI_ITCase {
     public void nacos_publishConfig_5() throws Exception {
         String content = "test";
         boolean result = iconfig.publishConfig(dataId, null, content);
-        Thread.sleep(2*TIME_OUT);
+        Thread.sleep(TIME_OUT);
         Assert.assertTrue(result);
 
         String value = iconfig.getConfig(dataId, null, TIME_OUT);
@@ -609,11 +618,13 @@ public class ConfigAPI_ITCase {
             Assert.assertEquals(HttpURLConnection.HTTP_OK, result.code);
             Assert.assertEquals("true", result.content);
 
-
             List<String> params = Arrays.asList("dataId", dataId, "group", group, "beta", "true");
             result = agent.httpGet(CONFIG_CONTROLLER_PATH + "/", null, params, agent.getEncode(), TIME_OUT);
             Assert.assertEquals(HttpURLConnection.HTTP_OK, result.code);
             Assert.assertEquals(content, JSON.parseObject(result.content).getJSONObject("data").getString("content"));
+            // delete data
+            result = agent.httpDelete(CONFIG_CONTROLLER_PATH + "/", null, params, agent.getEncode(), TIME_OUT);
+            Assert.assertEquals(HttpURLConnection.HTTP_OK, result.code);
         } catch (Exception e) {
             Assert.assertTrue(false);
         }
